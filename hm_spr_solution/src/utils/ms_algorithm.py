@@ -67,22 +67,27 @@ def colour_quantisation(arr_original):
 
     return arr
 
-def get_line_coords_via_upper_corners(img_arr, colour):
+def get_line_coords_via_corners(img_arr, colour, is_upper_corner=True):
     condition_1 = img_arr[:, :, 0] == colour[0]
     condition_2 = img_arr[:, :, 1] == colour[1]
     condition_3 = img_arr[:, :, 2] == colour[2]
     
     channel_1_coords, channel_2_coords = np.where(condition_1 & condition_2 & condition_3)
     
-    # 좌우 모서리 기준점 좌표
-    # 모서리 기준점 좌표 순서는 [x축, y축]
-    upper_left = [0, 0]
-    upper_right = [img_arr.shape[1] - 1, 0]
-
-    # 최대 거리 설정(이미지 대각선)
-    max_diff_upper_left = img_arr.shape[0] * img_arr.shape[1]
-    max_diff_upper_right = img_arr.shape[0] * img_arr.shape[1]
-
+    # 모서리 기준점 좌표 설정
+    h = img_arr.shape[0]
+    w = img_arr.shape[1]
+    if is_upper_corner:
+        left_coord = [0, 0]
+        right_coord = [w - 1, 0]
+    else:
+        left_coord = [0, h - 1]
+        right_coord = [w - 1, h - 1]
+    
+    # 최대 거리 설정
+    max_diff_left = h * w
+    max_diff_right = h * w
+    
     # 찾아낸 좌표들 기본값 설정
     left_x = None
     left_y = None
@@ -92,28 +97,25 @@ def get_line_coords_via_upper_corners(img_arr, colour):
 
     # 좌표 값마다 모서리 기준점과 거리(L1) 비교
     # --- 이미지 표현에서 첫번째 채널 값은 y축, 두번째 채널 값은 x축을 표현
-    for idx, (y, x) in enumerate(zip(channel_1_coords, channel_2_coords)):
+    for y, x in zip(channel_1_coords, channel_2_coords):
+        left_distance = np.abs(left_coord[0] - x) + np.abs(left_coord[1] - y)
+        right_distance = np.abs(right_coord[0] - x) + np.abs(right_coord[1] - y)
         
-        left_distance = np.abs(upper_left[0] - x) + np.abs(upper_left[1] - y)
-        right_distance = np.abs(upper_right[0] - x) + np.abs(upper_right[1] - y)
-        
-        if left_distance < max_diff_upper_left:
+        if left_distance < max_diff_left:
             left_x = x
             left_y = y
+            # print(f"left coords found [{left_y}, {left_x}]")
+            max_diff_left = left_distance
             
-            max_diff_upper_left = left_distance
-            print(f"left coords found [{left_y}, {left_x}]")
-            
-        elif right_distance < max_diff_upper_right:
+        elif right_distance < max_diff_right:
             right_x = x
             right_y = y
-            
-            max_diff_upper_right = right_distance
-            print(f"right coords found [{right_y}, {right_x}]")
-            
-    # 시각화
+            max_diff_right = right_distance
+            # print(f"right coords found [{right_y}, {right_x}]")
+
+    # # 시각화
     # plt.imshow(img_arr)
-    # plt.plot([left_x_rivet, right_x_rivet], [left_y_rivet, right_y_rivet], "wo", linestyle="--")
+    # plt.plot([left_x, right_x], [left_y, right_y], "wo", linestyle="--")
     # plt.show()
     
     return left_x, left_y, right_x, right_y
