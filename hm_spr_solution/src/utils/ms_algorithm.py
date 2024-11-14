@@ -312,6 +312,42 @@ def get_head_diff(path, is_gen=True):
         plt.savefig(f"./result_{timestamp}.png")
     return result
 
+
+def get_perp_coords(left_x, left_y, right_x, right_y, length, divider):
+    x_length = right_x - left_x
+    y_length = right_y - left_y
+
+    mag = math.sqrt(x_length**2 + y_length**2)    
+    x_length_norm = x_length / mag
+    y_length_norm = y_length / mag
+    
+    # middle point
+    middle_x = round((left_x + right_x) / 2)
+    middle_y = round((left_y + right_y) / 2)
+    
+    # switch
+    temp = x_length_norm
+    x_length_norm = -1 * y_length_norm
+    y_length_norm = temp
+    
+    # get coords
+    ratio = 1 / divider
+    new_x_1 = middle_x + x_length_norm * length * ratio
+    new_y_1 = middle_y + y_length_norm * length * ratio
+    new_x_2 = middle_x - x_length_norm * length * (1 - ratio)
+    new_y_2 = middle_y - y_length_norm * length * (1 - ratio)
+    
+    # if coords goes beyond the original coordinate system
+    if new_x_1 < 0 or new_y_1 < 0 or new_x_2 < 0 or new_y_2 < 0:
+        ratio = 1 - ratio
+        new_x_1 = middle_x + x_length_norm * length * ratio
+        new_y_1 = middle_y + y_length_norm * length * ratio
+        new_x_2 = middle_x - x_length_norm * length * (1 - ratio)
+        new_y_2 = middle_y - y_length_norm * length * (1 - ratio)
+        
+    return int(new_x_1), int(new_y_1), int(new_x_2), int(new_y_2)
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--img_path", type=str, default=None)
